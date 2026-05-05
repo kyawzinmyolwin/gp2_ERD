@@ -1,0 +1,207 @@
+sprint1 required
+
+erDiagram
+    role {
+        int id PK
+        varchar name UK "Super Admin or Member"
+    }
+
+    user {
+        int id PK
+        varchar username UK
+        varchar email UK
+        varchar password_hash
+        varchar first_name
+        varchar last_name
+        varchar phone
+        varchar emergency_contact_name
+        varchar emergency_contact_phone
+        int role_id FK
+        boolean is_active
+        timestamp created_at
+    }
+
+    password_reset_token {
+        int id PK
+        int user_id FK
+        varchar token_hash UK
+        timestamp expires_at
+        timestamp used_at
+        timestamp created_at
+    }
+
+    login_otp {
+        int id PK
+        int user_id FK
+        varchar otp_hash
+        timestamp expires_at
+        timestamp used_at
+        timestamp created_at
+    }
+
+    conservation_group {
+        int id PK
+        varchar name UK
+        varchar slug UK
+        text description
+        text operational_area_description
+        varchar logo_url
+        varchar region
+        varchar visibility "Public or Private"
+        boolean is_active
+        int coordinator_user_id FK
+        int created_by FK
+        timestamp created_at
+    }
+
+    group_application {
+        int id PK
+        int applicant_user_id FK
+        varchar proposed_name
+        text description
+        varchar proposed_visibility
+        varchar status "Pending Approved Rejected"
+        int reviewed_by FK
+        timestamp reviewed_at
+        text rejection_reason
+        timestamp created_at
+    }
+
+    group_membership {
+        int id PK
+        int group_id FK
+        int user_id FK
+        varchar group_role "Observer Operator Coordinator"
+        varchar membership_status
+        timestamp joined_at
+    }
+
+    group_join_request {
+        int id PK
+        int group_id FK
+        int user_id FK
+        varchar request_status
+        timestamp requested_at
+        int decided_by FK
+        timestamp decided_at
+        text decision_reason
+    }
+
+    audit_log {
+        int id PK
+        int actor_user_id FK
+        varchar target_type
+        int target_id
+        varchar action
+        text old_value
+        text new_value
+        timestamp performed_at
+        text notes
+    }
+
+    line {
+        int id PK
+        int group_id FK
+        varchar name
+        varchar line_type "Trap or Bait Station"
+        boolean is_retired
+    }
+
+    operator_line {
+        int operator_id PK
+        int line_id PK
+        date assignment_date
+    }
+
+    trap_type {
+        int id PK
+        varchar name UK
+    }
+
+    trap {
+        int id PK
+        varchar code UK
+        int trap_type_id FK
+        int group_id FK
+        int line_id FK
+        numeric latitude
+        numeric longitude
+        boolean is_retired
+    }
+
+    bait_station_type {
+        int id PK
+        varchar name UK "23 PDF types plus Other"
+        boolean allow_custom_text "TRUE only for Other"
+    }
+
+    bait_station {
+        int id PK
+        varchar code UK "required unique"
+        int group_id FK
+        int line_id FK
+        int bait_station_type_id FK "required"
+        varchar custom_type_text "required if type is Other"
+        numeric latitude "required"
+        numeric longitude "required"
+        boolean is_retired
+    }
+
+    target_species {
+        int id PK
+        varchar name UK "Rats Mice Possums etc"
+    }
+
+    active_ingredient {
+        int id PK
+        varchar name UK "Brodifacoum Cyanide etc"
+    }
+
+    formulation {
+        int id PK
+        varchar name UK "Cereal Pellet etc"
+    }
+
+    bait_station_record {
+        int id PK
+        int group_id FK
+        int bait_station_id FK "required"
+        timestamp recorded_at "required ISO 8601"
+        int recorded_by FK "optional"
+        int target_species_id FK "required"
+        int active_ingredient_id FK "required"
+        int formulation_id FK "required"
+        numeric concentration_pct "required percent"
+        numeric bait_remaining_kg "required Kg"
+        numeric bait_removed_kg "optional Kg"
+        numeric bait_added_kg "optional Kg"
+        text notes "optional"
+    }
+
+    role ||--o{ user : "has"
+    user ||--o{ password_reset_token : "requests"
+    user ||--o{ login_otp : "receives"
+    user ||--o{ conservation_group : "coordinates"
+    user ||--o{ group_application : "applies"
+    user ||--o{ group_application : "reviews"
+    conservation_group ||--o{ group_membership : "has"
+    user ||--o{ group_membership : "belongs to"
+    conservation_group ||--o{ group_join_request : "receives"
+    user ||--o{ group_join_request : "submits"
+    user ||--o{ group_join_request : "decides"
+    user ||--o{ audit_log : "performs"
+    conservation_group ||--o{ line : "owns"
+    line ||--o{ operator_line : "assigned via"
+    user ||--o{ operator_line : "operates"
+    conservation_group ||--o{ trap : "owns"
+    line ||--o{ trap : "contains"
+    trap_type ||--o{ trap : "classifies"
+    conservation_group ||--o{ bait_station : "owns"
+    line ||--o{ bait_station : "contains"
+    bait_station_type ||--o{ bait_station : "classifies"
+    bait_station ||--o{ bait_station_record : "logged in"
+    user ||--o{ bait_station_record : "records"
+    target_species ||--o{ bait_station_record : "targets"
+    active_ingredient ||--o{ bait_station_record : "uses"
+    formulation ||--o{ bait_station_record : "delivered as"
+    conservation_group ||--o{ bait_station_record : "scoped to"
